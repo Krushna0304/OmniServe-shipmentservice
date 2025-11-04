@@ -1,0 +1,50 @@
+spring:
+  application:
+    name: shipmentservice
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/omniservedb
+    username: postgres
+    password: Admin@123
+
+  jpa:
+    hibernate:
+      ddl-auto: update       # options: none | validate | update | create | create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+
+  kafka:
+    bootstrap-servers: localhost:9092
+
+    producer:
+      # Serialization for key/value
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+    consumer:
+      group-id: supplier-group
+      auto-offset-reset: earliest
+
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+
+      properties:
+        # Error handling for deserialization (prevents consumer crash on bad messages)
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+
+        # Allow JSON deserializer to trust your package classes
+        spring.json.trusted.packages: "com.omniserve.*"
+
+        # Default Java type for deserialization (your POJO class)
+        spring.json.value.default.type: com.omniserve.commondblib.event.ShipmentRequestEvent
+
+        # Preserve headers for type info
+        spring.json.use.type.headers: true
+
+
+server:
+  port: 8083
