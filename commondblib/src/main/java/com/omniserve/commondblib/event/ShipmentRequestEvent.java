@@ -13,14 +13,13 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 public class ShipmentRequestEvent {
-        String shipmentId;
-        String orderId;
-        Double pickupLongitude;
-        Double pickupLatitude;
-        Double dropLongitude;
-        Double dropLatitude;
-        OrderState orderState;
-        String userId;
-        LocalDateTime timestamp;
-
+        private String shipmentId;
+        private String orderId;
+        private Double pickupLongitude;
+        private Double pickupLatitude;
+        private Double dropLongitude;
+        private Double dropLatitude;
+        private OrderState orderState;
+        private String userId;
+        private LocalDateTime timestamp;
 }

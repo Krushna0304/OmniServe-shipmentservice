@@ -6,6 +6,7 @@ import com.omniserve.commondblib.event.ShipmentRequestEvent;
 import com.omniserve.commondblib.repository.ShipmentInfoRepository;
 import com.omniserve.commondblib.repository.ShipmentRequestRepository;
 import com.omniserve.commondblib.state.OrderState;
+import com.omniserve.commondblib.util.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+
+import static com.omniserve.commondblib.util.Mapper.toDto;
 
 @Service
 public class ShipmentService {
@@ -22,22 +25,11 @@ public class ShipmentService {
     @Autowired
     private ShipmentInfoRepository shipmentInfoRepository;
 
-    public List<ShipmentRequestEvent> getPendingShipments(int minuteAgo)
-    {
+    public List<ShipmentRequestEvent> getPendingShipments(int minuteAgo) {
         List<ShipmentRequest> pendingShipments = shipmentRequestRepository.findShipmentsByStateAndTime(OrderState.READY_TO_DELIVER.toString(),LocalDateTime.now(),minuteAgo);
 
         return pendingShipments.stream()
-                .map(shipment -> new ShipmentRequestEvent(
-                        shipment.getShipmentId(),
-                        shipment.getOrderId(),
-                        shipment.getPickupLongitude(),
-                        shipment.getPickupLatitude(),
-                        shipment.getDropLongitude(),
-                        shipment.getDropLatitude(),
-                        shipment.getOrderState(), // Assuming initial shipment state is PENDING
-                        shipment.getUserId(),
-                        shipment.getTimestamp()
-                ))
+                .map(Mapper::toDto)
                 .toList();
     }
 
@@ -45,22 +37,8 @@ public class ShipmentService {
     public Boolean acceptShipment(String shipmentId)
     {
         Optional<ShipmentRequest>  shipmentRequest = shipmentRequestRepository.getAndSetState(shipmentId, OrderState.READY_TO_DELIVER.toString(),OrderState.IN_SHIPMENT.toString());
-        if(shipmentRequest.isPresent())
-        {
-            String shipperId = "shipper123";
-            ShipmentInfo shipmentInfo = ShipmentInfo.builder()
-                    .shipmentId(shipmentRequest.get().getShipmentId())
-                    .orderId(shipmentRequest.get().getOrderId())
-                    .userId(shipmentRequest.get().getUserId())
-                    .shipperId(shipperId)
-                    .checkInTime(LocalDateTime.now())
-                    .pickupLongitude(shipmentRequest.get().getPickupLongitude())
-                    .pickupLatitude(shipmentRequest.get().getPickupLatitude())
-                    .dropLatitude(shipmentRequest.get().getDropLatitude())
-                    .dropLongitude(shipmentRequest.get().getDropLongitude())
-                    .build();
-
-            shipmentInfoRepository.save(shipmentInfo);
+        if(shipmentRequest.isPresent()) {
+            shipmentInfoRepository.save(Mapper.toEntity(shipmentRequest.get()));
             return true;
         }
         return false;
